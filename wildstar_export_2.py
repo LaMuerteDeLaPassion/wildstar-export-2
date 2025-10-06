@@ -22,6 +22,7 @@ class DataStore:
         "textures": False,
         "skeleton": True,
         "embed_textures": False,
+        "attempt_layer_fix": False,
         "submeshes": [],
     }
     ARCHIVE_FILE_TYPES = [".map", ".form", ".xml", ".lua", ".txd", ".bk2", ".sky", ".wem", ".jpg", ".tbl", ".dgn", ".m3", ".psd", ".area", ".bnk", ".tex", ".ttf", ".tga", ".i3", ".sho"]
@@ -29,7 +30,7 @@ class DataStore:
 
 dpg.create_context()
 
-def file_selected_callback(sender, app_data, data_store):
+def wildstarexe_selected_callback(sender, app_data, data_store):
     dpg.add_loading_indicator(style=1,radius=12.5, tag="archive_loading", parent="main_window", pos=[500,300])
     dpg.set_value("wildstar_exe_location", app_data["file_path_name"])
     data_store.DATA_MANAGER.initialize_data(app_data["file_path_name"])
@@ -60,26 +61,26 @@ def add_m3_file_details(data_store):
         dpg.add_text(nr_tris)
     with dpg.group(horizontal=True):
         dpg.add_text("No. Textures:", wrap=150)
-        dpg.add_text(data_store.LDOM_HEADER.nrTextures)
+        dpg.add_text(data_store.LDOM_HEADER.textures_def["nr"])
     with dpg.group(horizontal=True):
         dpg.add_text("No. Submeshes:", wrap=150)
         dpg.add_text(data_store.LDOM_HEADER.geometry.nrSubmeshes)
     with dpg.group(horizontal=True):
         dpg.add_text("No. Bones:", wrap=150)
-        dpg.add_text(data_store.LDOM_HEADER.nrBones)
+        dpg.add_text(data_store.LDOM_HEADER.bones_def["nr"])
     with dpg.group(horizontal=True):
         dpg.add_text("No. Materials:", wrap=150)
-        dpg.add_text(data_store.LDOM_HEADER.nrMaterials)
+        dpg.add_text(data_store.LDOM_HEADER.materials_def["nr"])
     with dpg.group(horizontal=True):
         dpg.add_text("No. Animations(?):", wrap=150)
         with dpg.tooltip(dpg.last_item()):
             dpg.add_text("All animations are stored in 1 track.")
-        dpg.add_text(data_store.LDOM_HEADER.nrModelAnimations)
+        dpg.add_text(data_store.LDOM_HEADER.AnimationsMeta_def["nr"])
     with dpg.group(horizontal=True):
         dpg.add_text("No. Variants(?): ", wrap=150)
         with dpg.tooltip(dpg.last_item()):
             dpg.add_text("A value of 0 means there is only the default variant")
-        dpg.add_text(data_store.LDOM_HEADER.nrSubmeshGroupsTable)
+        dpg.add_text(data_store.LDOM_HEADER.submesh_ids_def["nr"])
     dpg.add_separator()
     with dpg.group(horizontal=True):
         dpg.add_text("submeshes(?)")
@@ -88,10 +89,18 @@ def add_m3_file_details(data_store):
             dpg.add_text("NOTE: Submeshes selected here are also the submeshes that will be exported.")
         dpg.add_text("variants(?)", indent=160)
         with dpg.tooltip(dpg.last_item()):
-            dpg.add_text("Some .m3 models have multiple variants. EX: strain vs normal of a creature. These variants are all stored in the same .m3 file. Therefore, if you export a single .m3 file, you could end up exporting multiple versions of the same model. The devs at W* most likely grouped the different variants using this structure.", wrap=500)
-            dpg.add_text("Note: sometimes, a variant is empty, and other times, it only contains an accessory of the model instead a version of the model. Most likely we do not understand how this structure works completely.", wrap=500)
-            dpg.add_text("Note2: currently, variants are conencted to the submeshes through the group_id property.", wrap=500)
-            dpg.add_text("Note3: the variant_id appears in creature2DisplayInfo.tbl. This could contain the missing variant info on how to combine meshes.", wrap=500)
+            dpg.add_text("Some .m3 models have multiple variants. EX: stran vs normal of a creature.")
+            dpg.add_text("These variants are all stored in the same .m3 file. Therefore, if you export")
+            dpg.add_text("a single .m3 file, you could end up exporting multiple versions of the same")
+            dpg.add_text("model. The devs at W* most likely grouped the different variants using this")
+            dpg.add_text("structure.")
+            dpg.add_text("Note: sometimes, a variant is empty, and other times, it only contains an ")
+            dpg.add_text("accessory of the model instead a version of the model. Most likely we do not")
+            dpg.add_text("understand how this structure works completely.")
+            dpg.add_text("Note2: currently, variants are conencted to the submeshes through the group_id")
+            dpg.add_text("property.")
+            dpg.add_text("Note3: the variant_id appears in creature2DisplayInfo.tbl. This could contain")
+            dpg.add_text("the missing variant info on how to combine meshes.")
     with dpg.child_window(width=300, autosize_y=True, autosize_x=False, border=False):
         with dpg.group(horizontal=True):
             with dpg.group(tag="visible_meshes"):
@@ -103,6 +112,7 @@ def add_m3_file_details(data_store):
             groups.append("Other")
             with dpg.group(tag="visible_variants"):
                 dpg.add_radio_button(groups, callback=redraw_model_mesh_variant, user_data=data_store, default_value=data_store.CHOSEN_VARIANT)
+
     dpg.pop_container_stack()
 
 def load_file_on_right_panel(data_store):
@@ -156,9 +166,13 @@ def add_m3_export_details(data_store):
             dpg.add_checkbox(label="Embed Textures(?)", default_value=data_store.EXPORT_FILTERS['textures'], user_data=data_store, callback=change_export_settings, tag="export_settings_embed_textures")
             with dpg.tooltip(dpg.last_item()):
                 dpg.add_text("Store the textures inside the .gltf file instead of exporting them as separate files.")
+            dpg.add_checkbox(label="Attempt layer fix", default_value=data_store.EXPORT_FILTERS['attempt_layer_fix'], user_data=data_store, callback=change_export_settings, tag="export_settings_attempt_layer_fix")
+            with dpg.tooltip(dpg.last_item()):
+                dpg.add_text("Since Wildstar is heavily reliant on vertex blending, some models will look like they have incorrect textures applied. This option will try to fix it, by prioritizing the texture that should be displayed. It will not always work, and it could break some models.", wrap=500)
         with dpg.group(width=150, indent=370):
             dpg.add_button(label="Export M3", callback=export_raw_file, user_data=data_store)
             dpg.add_button(label="Export GLTF", callback=export_gltf_model, user_data=data_store)
+            dpg.add_button(label="Export Anims", callback=export_animation_timestamps, user_data=data_store)
     dpg.add_progress_bar(label="Export progress", default_value=0, overlay="",height=25, tag="export_progress")
     dpg.pop_container_stack()
 
@@ -266,8 +280,18 @@ def m3_template(data_store):
     with dpg.group():
         with dpg.child_window(width=520, height=540, border=True):
             with dpg.drawlist(width=500, height=500):
-                with dpg.draw_layer(tag="main_3d_window", depth_clipping=False, perspective_divide=True, cull_mode=dpg.mvCullMode_Back):
+                with dpg.draw_layer(tag="main_3d_window", depth_clipping=False, perspective_divide=True, cull_mode=dpg.mvCullMode_Back): #, depth_clipping=True, perspective_divide=True, cull_mode=dpg.mvCullMode_Back
+                    # data_store.SELECTED_FILE_PATH = "AIDX\\Art\\Creature\\Rowsdower\\Rowsdower.m3"
+                    # # data_store.SELECTED_FILE_PATH = "AIDX\\Art\\Creature\\Asura\\Asura.m3"
+                    # # BROKEN
+                    # # data_store.SELECTED_FILE_PATH = "AIDX\\Art\\Creature\\Gorgonoth\\Gorgonoth.m3"
+                    # # data_store.SELECTED_FILE_PATH = "AIDX\\Art\\Creature\\Osun\\"
+                    # data_store.SELECTED_FILE_DATA = data_store.DATA_MANAGER.get_file_bytes(data_store.SELECTED_FILE_PATH)
+                    # data_store.LDOM_HEADER = Header.read_header(io.BytesIO(data_store.SELECTED_FILE_DATA))
+                    # add_m3_file_details(data_store)
+                    # draw_3d_model(data_store)
                     pass
+
 
             with dpg.group(horizontal=True):
                 dpg.add_button(label="Rotate Left", callback=rotate_model_left, user_data=data_store)
@@ -310,7 +334,27 @@ def redraw_model_mesh(sender, keyword, data_store):
     data_store.CHOSEN_VARIANT = "Other"
     add_m3_file_details(data_store)
     draw_3d_model(data_store)
+def generate_bounding_box(point1, point2):
+    x_min = min(point1[0], point2[0])
+    y_min = min(point1[1], point2[1])
+    z_min = min(point1[2], point2[2])
+    
+    x_max = max(point1[0], point2[0])
+    y_max = max(point1[1], point2[1])
+    z_max = max(point1[2], point2[2])
 
+    corners = [
+        (x_min, y_min, z_min),
+        (x_min, y_min, z_max),
+        (x_min, y_max, z_min),
+        (x_min, y_max, z_max),
+        (x_max, y_min, z_min),
+        (x_max, y_min, z_max),
+        (x_max, y_max, z_min),
+        (x_max, y_max, z_max),
+    ]
+    
+    return corners
 def draw_3d_model(data_store):
     if data_store.LDOM_HEADER is None:
         return
@@ -336,6 +380,54 @@ def draw_3d_model(data_store):
     dpg.push_container_stack("main_3d_window")
     bounds = [[9999,9999,9999], [-9999,-9999,-9999]]
     with dpg.draw_node(tag="cube"):
+        # DRAW OBJECT structs: 510,520,530
+        # indices = data_store.LDOM_HEADER.unk520_LUT
+        # indices = data_store.LDOM_HEADER.unk530_LUT
+        # points = data_store.LDOM_HEADER.unk510_LUT
+        # for a_point in points:
+        #     if a_point[0] < bounds[0][0]:
+        #         bounds[0][0] = a_point[0]
+        #     if a_point[0] > bounds[1][0]:
+        #         bounds[1][0] = a_point[0]
+        #     if a_point[1] < bounds[0][1]:
+        #         bounds[0][1] = a_point[1]
+        #     if a_point[1] > bounds[1][1]:
+        #         bounds[1][1] = a_point[1]
+        #     if a_point[2] < bounds[0][2]:
+        #         bounds[0][2] = a_point[2]
+        #     if a_point[2] > bounds[1][2]:
+        #         bounds[1][2] = a_point[2]
+        # triange_nr = int(len(indices)/3)
+        # for a_triangle in range(triange_nr):
+        #     p1 = points[indices[a_triangle*3]][:3]
+        #     p2 = points[indices[a_triangle*3+1]][:3]
+        #     p3 = points[indices[a_triangle*3+2]][:3]
+        #     dpg.draw_triangle(p1,p2,p3,color=[0,0,0],fill=COLORS[0])
+
+        # DRAW OBJECT LOD/collision mesh
+        # indices = data_store.LDOM_HEADER.unk490s[0].indices
+        # points = data_store.LDOM_HEADER.unk490s[0].vertices
+        # for a_point in points:
+        #     if a_point[0] < bounds[0][0]:
+        #         bounds[0][0] = a_point[0]
+        #     if a_point[0] > bounds[1][0]:
+        #         bounds[1][0] = a_point[0]
+        #     if a_point[1] < bounds[0][1]:
+        #         bounds[0][1] = a_point[1]
+        #     if a_point[1] > bounds[1][1]:
+        #         bounds[1][1] = a_point[1]
+        #     if a_point[2] < bounds[0][2]:
+        #         bounds[0][2] = a_point[2]
+        #     if a_point[2] > bounds[1][2]:
+        #         bounds[1][2] = a_point[2]
+        # triange_nr = int(len(indices)/3)
+        # for a_triangle in range(triange_nr):
+        #     p1 = points[indices[a_triangle*3]]
+        #     p2 = points[indices[a_triangle*3+1]]
+        #     p3 = points[indices[a_triangle*3+2]]
+        #     dpg.draw_triangle(p1,p2,p3,color=[0,0,0],fill=COLORS[0])
+
+        # DRAW OBJECT GEOMETRY
         for i, a_submesh in enumerate(data_store.LDOM_HEADER.geometry.submesh):
             if not data_store.MESHES_TO_DRAW[i]:
                 continue
@@ -363,6 +455,18 @@ def draw_3d_model(data_store):
                 p2 = points[indices[a_triangle*3+1]]
                 p3 = points[indices[a_triangle*3+2]]
                 dpg.draw_triangle(p1,p2,p3,color=[0,0,0],fill=COLORS[color_id])
+        box_bounds = data_store.LDOM_HEADER.bounds_5
+        points = generate_bounding_box(box_bounds.bb_A, box_bounds.bb_B)
+        dpg.draw_line(points[0], points[1])
+        dpg.draw_line(points[1], points[3])
+        dpg.draw_line(points[2], points[3])
+        dpg.draw_line(points[2], points[0])
+        dpg.draw_line(points[4], points[5])
+        dpg.draw_line(points[5], points[7])
+        dpg.draw_line(points[6], points[7])
+        dpg.draw_line(points[6], points[4])
+        dpg.draw_circle(box_bounds.circle_center, box_bounds.circle_radius, color=[0,0,0])
+
     pos_x = abs(bounds[1][0] - bounds[0][0])
     pos_y = abs(bounds[1][1] - bounds[0][1])
     pos_z = abs(bounds[1][2] - bounds[0][2])
@@ -478,15 +582,30 @@ def export_gltf_model(sender, app_data, data_store):
     dpg.set_value("export_progress", progress/export_number)
     dpg.configure_item("export_progress", overlay='{0:.2f}%'.format(progress/export_number*100))
 
+def export_animation_timestamps(sender, app_data, data_store):
+    file_name = data_store.SELECTED_FILE_NAME.replace(".m3", "_animations")
+    export_location = os.path.join(data_store.EXPORT_LOCATION, file_name)
+    export_location += ".txt"
+    with open(export_location, "w") as file:
+        file.write(f"model_sequence_db_id,fallback_sequence?,timestamp_start(ms),timestamp_end(ms)\n")
+        for i, a_anim_value in enumerate(data_store.LDOM_HEADER.model_animations):
+            line = f"%s,%s,%s,%s\n" %(a_anim_value.model_sequence_db_id,a_anim_value.fallback_sequence,a_anim_value.timestamp_start,a_anim_value.timestamp_end)
+            file.write(line)
+
 def change_export_settings(sender, app_data, data_store):
     data_store.EXPORT_FILTERS['skeleton'] = dpg.get_value("export_settings_skeleton")
     data_store.EXPORT_FILTERS['textures'] = dpg.get_value("export_settings_textures")
+    
     if not data_store.EXPORT_FILTERS['textures']:
         dpg.set_value("export_settings_embed_textures", False)
+        dpg.set_value("export_settings_attempt_layer_fix", False)
         dpg.configure_item("export_settings_embed_textures", enabled=False)
+        dpg.configure_item("export_settings_attempt_layer_fix", enabled=False)
     else:
         dpg.configure_item("export_settings_embed_textures", enabled=True)
+        dpg.configure_item("export_settings_attempt_layer_fix", enabled=True)
     data_store.EXPORT_FILTERS['embed_textures'] = dpg.get_value("export_settings_embed_textures")
+    data_store.EXPORT_FILTERS['attempt_layer_fix'] = dpg.get_value("export_settings_attempt_layer_fix")
 
 def export_list_of_files(sender, app_data, data_store):
     dpg.add_loading_indicator(style=1,radius=12.5, tag="image_loading", parent="tab_mass_export", pos=[500,300])
@@ -526,7 +645,6 @@ def get_all_files_recursively(path, data_store, accepted_extensions):
         if os.path.splitext(a_file)[1] in accepted_extensions:
             file_list.append(path + "\\" + a_file)
     return file_list
-
 def export_list_file_selected_callback(sender, app_data, data_store):
     selected_file = None
     for a_file in app_data["selections"]:
@@ -574,7 +692,12 @@ with dpg.window(label="Main", width=800, height=800, tag="main_window"):
     data_store.EXPORT_LOCATION = os.path.abspath(os.getcwd())
     # DIALOGS
     dpg.add_file_dialog(directory_selector=True, show=False, callback=set_export_location, tag="file_export_dialog_id", width=700 ,height=400, user_data=data_store)
-    with dpg.file_dialog(directory_selector=False, show=False, callback=file_selected_callback, id="file_dialog_id", width=700 ,height=400, user_data=data_store):
+    with dpg.file_dialog(directory_selector=False, show=False, callback=wildstarexe_selected_callback, id="file_dialog_id", width=700 ,height=400, user_data=data_store):
+        # dpg.add_file_extension(".*")
+        # dpg.add_file_extension("", color=(150, 255, 150, 255))
+        # dpg.add_file_extension("Source files (*.cpp *.h *.hpp){.cpp,.h,.hpp}", color=(0, 255, 255, 255))
+        # dpg.add_file_extension(".h", color=(255, 0, 255, 255), custom_text="[header]")
+        # dpg.add_file_extension(".py", color=(0, 255, 0, 255), custom_text="[Python]")
         dpg.add_file_extension(".exe")
     with dpg.file_dialog(directory_selector=False, show=False, callback=export_list_file_selected_callback, id="export_list_file_dialog_id", width=700 ,height=400, user_data=data_store):
         dpg.add_file_extension(".*")
@@ -591,7 +714,7 @@ with dpg.window(label="Main", width=800, height=800, tag="main_window"):
         with dpg.tab(label="Explore Archive", tag="tab_explore_archive"):
             with dpg.group(horizontal=True):
                 with dpg.child_window(tag="dir_tree", width=500, autosize_y=True, horizontal_scrollbar=True):
-                    # recursive_folders("AIDX", data_store)
+                    recursive_folders("AIDX", data_store)
                     pass
                 with dpg.child_window(tag="file_view", autosize_x=True, autosize_y=True, horizontal_scrollbar=True):
                     with dpg.group(horizontal=True):
@@ -600,7 +723,7 @@ with dpg.window(label="Main", width=800, height=800, tag="main_window"):
                     with dpg.group(horizontal=True):
                         dpg.add_text("File Path:", wrap=150)
                         dpg.add_text("", tag="right_path")
-                    dpg.add_separator() 
+                    dpg.add_separator() # label="This is a separator with text"
                     with dpg.group(horizontal=True, tag="main_file_view"):
                         pass
         with dpg.tab(label="Mass Export (WIP)", tag="tab_mass_export"):
@@ -633,3 +756,22 @@ dpg.start_dearpygui()
 while dpg.is_dearpygui_running():
     dpg.render_dearpygui_frame()
 dpg.destroy_context()
+
+
+
+# import dearpygui.dearpygui as dpg
+# import dearpygui.demo as demo
+
+# dpg.create_context()
+# dpg.create_viewport(title='Custom Title', width=600, height=600)
+
+# demo.show_demo()
+
+# dpg.setup_dearpygui()
+# dpg.show_viewport()
+# dpg.start_dearpygui()
+# dpg.destroy_context()
+
+
+
+
