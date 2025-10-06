@@ -359,32 +359,31 @@ class TexJPEG:
         image_data = bytearray(actual_width * actual_height * 4)
         lum = [[0]*64 for _ in range(4)]
         prevDc = [0, 0, 0, 0]
-
+        color_stats = [0, 0, 0, 0]
         for y in range(actual_height // 8):
             for x in range(actual_width // 8):
-                # Layer 0
-                if self.header.layer_infos[0]["has_replacement"] == 0:
-                    prevDc[0], lum[0] = self._process_block(prevDc[0], br, self.huffman.dcLumTable, self.huffman.acLumTable, self.luminanceQuantTable[0], is_luminance=True)
-                else:
-                    lum[0] = [self.header.layer_infos[0]["replacement"]]*64
+                # if self.header.layer_infos[0]["has_replacement"] == 0:
+                prevDc[0], lum[0] = self._process_block(prevDc[0], br, self.huffman.dcLumTable, self.huffman.acLumTable, self.luminanceQuantTable[0], is_luminance=True)
+                # else:
+                #     lum[0] = [self.header.layer_infos[0]["replacement"]]*64
 
                 # Layer 1
-                if self.header.layer_infos[1]["has_replacement"] == 0:
-                    prevDc[1], lum[1] = self._process_block(prevDc[1], br, self.huffman.dcChromaTable, self.huffman.acChromaTable, self.chrominanceQuantTable[1], is_luminance=True)
-                else:
-                    lum[1] = [self.header.layer_infos[1]["replacement"]]*64
+                # if self.header.layer_infos[1]["has_replacement"] == 0:
+                prevDc[1], lum[1] = self._process_block(prevDc[1], br, self.huffman.dcChromaTable, self.huffman.acChromaTable, self.chrominanceQuantTable[1], is_luminance=False)
+                # else:
+                #     lum[1] = [self.header.layer_infos[1]["replacement"]]*64
 
                 # Layer 2
-                if self.header.layer_infos[2]["has_replacement"] == 0:
-                    prevDc[2], lum[2] = self._process_block(prevDc[2], br, self.huffman.dcChromaTable, self.huffman.acChromaTable, self.chrominanceQuantTable[2], is_luminance=True)
-                else:
-                    lum[2] = [self.header.layer_infos[2]["replacement"]]*64
+                # if self.header.layer_infos[2]["has_replacement"] == 0:
+                prevDc[2], lum[2] = self._process_block(prevDc[2], br, self.huffman.dcChromaTable, self.huffman.acChromaTable, self.chrominanceQuantTable[2], is_luminance=False)
+                # else:
+                #     lum[2] = [self.header.layer_infos[2]["replacement"]]*64
 
                 # Layer 3
-                if self.header.layer_infos[3]["has_replacement"] == 0:
-                    prevDc[3], lum[3] = self._process_block(prevDc[3], br, self.huffman.dcLumTable, self.huffman.acLumTable, self.luminanceQuantTable[3], is_luminance=True)
-                else:
-                    lum[3] = [self.header.layer_infos[3]["replacement"]]*64
+                # if self.header.layer_infos[3]["has_replacement"] == 0:
+                prevDc[3], lum[3] = self._process_block(prevDc[3], br, self.huffman.dcLumTable, self.huffman.acLumTable, self.luminanceQuantTable[3], is_luminance=True)
+                # else:
+                #     lum[3] = [self.header.layer_infos[3]["replacement"]]*64
 
                 # Write pixel data
                 for iy in range(8):
@@ -407,7 +406,6 @@ class TexJPEG:
                         image_data[idx+1] = g & 0xFF
                         image_data[idx+2] = b & 0xFF
                         image_data[idx+3] = a & 0xFF
-
         return bytes(image_data)
 
     def _decode_color_block_type0(self, lum0, crom0, crom1, lum1):
@@ -728,10 +726,10 @@ class TexDXT:
                 pixel_color = ((r0+r1)//2, (g0+g1)//2, (b0+b1)//2, alpha)
             if code == 3:
                 pixel_color = (0, 0, 0, alpha)
-        self.img_raw[(y + j), (x + i), 0] = pixel_color[0]
-        self.img_raw[(y + j), (x + i), 1] = pixel_color[1]
-        self.img_raw[(y + j), (x + i), 2] = pixel_color[2]
-        self.img_raw[(y + j), (x + i), 3] = pixel_color[3]
+        self.img_raw[(x + i), (y + j), 0] = pixel_color[0]
+        self.img_raw[(x + i), (y + j), 1] = pixel_color[1]
+        self.img_raw[(x + i), (y + j), 2] = pixel_color[2]
+        self.img_raw[(x + i), (y + j), 3] = pixel_color[3]
 
     def getAlpha(self, i, j, a0, a1, atable, acode0, acode1):
         # Using the same method as the colors calculate the alpha values
@@ -926,3 +924,9 @@ class Tex:
             byte_nr = ((width + 3) // 4) * ((height + 3) // 4) * block_size
             output = br.read(byte_nr)
         return output
+
+
+# file_name = "./AgressorBot_Color.tex"
+# with open(file_name, "rb") as br:
+#     tex = Tex.decode(br, False)
+# tex.header.print()
