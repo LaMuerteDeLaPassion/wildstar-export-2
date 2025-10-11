@@ -396,15 +396,20 @@ class TexJPEG:
                         if out_col >= width:
                             continue
 
-                        r = lum[0][iy * 8 + ix]
-                        g = lum[1][iy * 8 + ix]
-                        b = lum[2][iy * 8 + ix]
+                        p1 = lum[0][iy * 8 + ix]
+                        p2 = lum[1][iy * 8 + ix]
+                        p3 = lum[2][iy * 8 + ix]
                         a = lum[3][iy * 8 + ix]
 
+                        r1 = p1 - (p3 >> 1)
+                        r2 = max(0, min(r1+p3, 0xFF))
+                        r3 = max(0, min(r1-(p2 >> 1), 0xFF))
+                        r4 = max(0, min(r3+p2, 0xFF))
+
                         idx = (out_row * width + out_col) * 4
-                        image_data[idx]   = r & 0xFF
-                        image_data[idx+1] = g & 0xFF
-                        image_data[idx+2] = b & 0xFF
+                        image_data[idx]   = r4 & 0xFF
+                        image_data[idx+1] = r2 & 0xFF
+                        image_data[idx+2] = r3 & 0xFF
                         image_data[idx+3] = a & 0xFF
         return bytes(image_data)
 
@@ -930,3 +935,4 @@ class Tex:
 # with open(file_name, "rb") as br:
 #     tex = Tex.decode(br, False)
 # tex.header.print()
+
