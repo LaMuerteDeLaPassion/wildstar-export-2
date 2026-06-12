@@ -19,7 +19,7 @@ class Header:
         self.trackdef_anim_1 = []                   # 0x038 - number:uint64, ofset_A:uint64, ofset_B:uint64  -  animation meta related
         self.trackdef_anim_2 = []                   # 0x050 - number:uint64, ofset_A:uint64, ofset_B:uint64  -  animation meta related
         self.trackdef_anim_3 = []                   # 0x068 - number:uint64, ofset_A:uint64, ofset_B:uint64  -  animation meta related
-        self.struct080_def = {}                     # 0x080 - number:uint64, ofset:uint64,                   -  animation related. contains animation ranges
+        self.BindPose_def = {}                      # 0x080 - number:uint64, ofset:uint64,                   -  200ms bind pose of model. 
         self.trackdef_unk090 = []                   # 0x090 - number:uint64, ofset_A:uint64, ofset_B:uint64
         self.trackdef_unk0A8 = []                   # 0x0A8 - number:uint64, ofset_A:uint64, ofset_B:uint64
         self.trackdef_unk0C0 = []                   # 0x0C0 - number:uint64, ofset_A:uint64, ofset_B:uint64
@@ -52,10 +52,10 @@ class Header:
         self.struct2B8_def = {}                     # 0x2B8 - number:uint64, ofset:uint64,                   -  
         self.lutdef_unk2C8 = []                     # 0x2C8 - number:uint64, ofset:uint64,                   -  some kind of lookup table with ids
         #                                           # padding 32
-        self.struct2F8_def = {}                     # 0x2F8 - number:uint64, ofset:uint64,                   -  
+        self.ParticleEmitter_def = {}               # 0x2F8 - number:uint64, ofset:uint64,                   -  
         self.struct308_def = {}                     # 0x308 - number:uint64, ofset:uint64,                   -  
         self.light_def = {}                         # 0x318 - number:uint64, ofset:uint64,                   -  Light meta
-        self.struct328_def = {}                     # 0x328 - number:uint64, ofset:uint64,                   -  
+        self.SpriteAttachment_def = {}              # 0x328 - number:uint64, ofset:uint64,                   -  
         self.lutdef_unk338 = []                     # 0x338 - number:uint64, ofset:uint64,                   -  some kind of lookup table with ids
         self.idUnk348 = 0                           # 0x338 - uint64                                         -  some kind of id related to structure trackdef_unk350. if idUnk348 == -1, there is not Track350
         self.trackdef_unk350 = []                   # 0x350 - number:uint64, ofset_A:uint64, ofset_B:uint64
@@ -85,7 +85,7 @@ class Header:
         self.lutdef_unk530 = []                     # 0x530 - number:uint64, ofset:uint64,                   -  indices for data stored in nrUnk510
         self.struct540_def = {}                     # 0x540 - number:uint64, ofset:uint64,                   -  
         self.lutdef_unk550 = []                     # 0x550 - number:uint64, ofset:uint64,                   -  some kind of lookup table with ids, mount related
-        self.struct560_def = {}                     # 0x560 - number:uint64, ofset:uint64,                   -  
+        self.EffectTimeline_def = {}                # 0x560 - number:uint64, ofset:uint64,                   -  possibly emotes
         self.struct570_def = {}                     # 0x570 - number:uint64, ofset:uint64,                   -  
         self.idUnk580 = 0                           # 0x580 - int64,                                         -  some kind of id related to structure struct588_def and 
         self.struct588_def = {}                     # 0x588 - number:uint64, ofset:uint64,                   -  
@@ -126,7 +126,7 @@ class Header:
         header.trackdef_anim_1 = struct.unpack('<qqq', br.read(24))
         header.trackdef_anim_2 = struct.unpack('<qqq', br.read(24))
         header.trackdef_anim_3 = struct.unpack('<qqq', br.read(24))
-        header.struct080_def["nr"], header.struct080_def["ofs"] = struct.unpack('<qq', br.read(16))
+        header.BindPose_def["nr"], header.BindPose_def["ofs"] = struct.unpack('<qq', br.read(16))
         header.trackdef_unk090 = struct.unpack('<qqq', br.read(24))
         header.trackdef_unk0A8 = struct.unpack('<qqq', br.read(24))
         header.trackdef_unk0C0 = struct.unpack('<qqq', br.read(24))
@@ -159,10 +159,10 @@ class Header:
         header.struct2B8_def["nr"], header.struct2B8_def["ofs"] = struct.unpack('<qq', br.read(16))
         header.lutdef_unk2C8 = struct.unpack('<qq', br.read(16))
         br.read(32)     # padding
-        header.struct2F8_def["nr"], header.struct2F8_def["ofs"] = struct.unpack("<qq", br.read(16))
+        header.ParticleEmitter_def["nr"], header.ParticleEmitter_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.struct308_def["nr"], header.struct308_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.light_def["nr"], header.light_def["ofs"] = struct.unpack("<qq", br.read(16))
-        header.struct328_def["nr"], header.struct328_def["ofs"] = struct.unpack("<qq", br.read(16))
+        header.SpriteAttachment_def["nr"], header.SpriteAttachment_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.lutdef_unk338 = struct.unpack("<qq", br.read(16))
         header.idUnk348, = struct.unpack("<q", br.read(8))
         header.trackdef_unk350 = struct.unpack("<qqq", br.read(24))
@@ -197,7 +197,7 @@ class Header:
         header.lutdef_unk530 = struct.unpack("<qq", br.read(16))
         header.struct540_def["nr"], header.struct540_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.lutdef_unk550 = struct.unpack("<qq", br.read(16))
-        header.struct560_def["nr"], header.struct560_def["ofs"] = struct.unpack("<qq", br.read(16))
+        header.EffectTimeline_def["nr"], header.EffectTimeline_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.struct570_def["nr"], header.struct570_def["ofs"] = struct.unpack("<qq", br.read(16))
         header.idUnk580, = struct.unpack("<q", br.read(8))
         header.struct588_def["nr"], header.struct588_def["ofs"] = struct.unpack("<qq", br.read(16))
@@ -270,7 +270,7 @@ class Header:
         # print(header.LUT_unk520)
         # print(header.LUT_unk530)
         # print(header.LUT_unk550)
-        print(header.LUT_BoneToCustomBoneMinMax)
+        # print(header.LUT_BoneToCustomBoneMinMax)
         # BOUNDS
         header.bounds_1 = BB1
         header.bounds_2 = BB2
@@ -279,11 +279,11 @@ class Header:
         header.bounds_5 = BB5
         #  READ OBJECTS
         header.model_animations = ModelAnimation.read_all(br, header)
-        header.unk080s = UNK080.read_all(br, header)
+        header.bind_poses = BindPose.read_all(br, header)
         header.unk0F0 = Unk0F0.read_all(br, header)
         header.unk1E0s = UNK1E0.read_all(br, header)
         header.unk2B8s = UNK2B8.read_all(br, header)
-        header.unk2F8s = Unk2F8.read_all(br, header)
+        header.particle_emitters = ParticleEmitter.read_all(br, header)
         header.bones = Bone.read_all_bones(br, header)
         header.textures = Texture.read_all(br, header)
         header.materials = M3Material.read_all(br, header)
@@ -291,10 +291,10 @@ class Header:
         header.geometry = Geometry.ReadGeometry(br, header)
         header.unk308 = UNK308.read_all(br, header)
         header.lights = LIGHT.read_all(br, header)
-        header.unk328s = UNK328.read_all(br, header)
+        header.sprite_attachments = SpriteAttachment.read_all(br, header)
         header.unk490s = UNK490.read_all(br, header)
         header.unk540s = UNK540.read_all(br, header)
-        header.unk560s = UNK560.read_all(br, header)
+        header.effect_timelines = EffectTimeline.read_all(br, header)
         header.unk570s = UNK570.read_all(br, header)
         header.unk588s = UNK588.read_all(br, header)
         header.CustomBoneMinMaxValuess = CustomBoneMinMaxValues.read_all(br, header)
@@ -466,7 +466,7 @@ class Geometry:
         # Read submeshes
         submeshOfs = geometryOfs + Geometry.SIZE + geometry.ofsSubmeshes
         geometry.submesh = []
-        print("NR submesh: " + str(geometry.nrSubmeshes))
+        # print("NR submesh: " + str(geometry.nrSubmeshes))
         for _ in range(geometry.nrSubmeshes):
             br.seek(submeshOfs)
             submesh = Submesh()
@@ -600,7 +600,7 @@ class Texture:
             # Read the texture path
             br.seek(start_pos + m3.textures_def["nr"] * Texture.SIZE + texture.offset)
             path_data = br.read(texture.nr_letters * 2)  # Assuming 2 bytes per letter (Unicode)
-            texture.path = path_data.decode("utf-16").encode("utf-8").decode("utf-8")  # Convert UTF-16 to UTF-8
+            texture.path = path_data.decode("utf-16").rstrip("\x00")  # nr_letters includes the NUL terminator
             if texture.type == 0:
                 texture.texture_type = "color"
             elif texture.type == 1:
@@ -807,7 +807,7 @@ class Bone:
             if unk02 + unk03 + unk04 + unk05 != -4:
                 # Logic for quaternion adjustment, if needed
                 pass
-            bone.print()
+            # bone.print()
             bones.append(bone)
 
         for a_bone in bones:     # needs to have the form [bone_0, bone_0/bone_1, bone_0/bone_1/bone_2]
@@ -1035,30 +1035,40 @@ class SubmeshGroupTable:
     def print(self, index):
         print(f"{index}\t {self.submesh_id}\t {self.unk1}")
 
-class UNK080:
+class BindPose:
+    """0x080 header block -- STATIC/BIND POSE TIME RANGE (1 entry observed). (was UNK080)
+
+    Decodes to (252, n, 100, t_start_ms, t_end_ms) where t_end = t_start + 200
+    and the window lies on the global animation timeline:
+      Rowsdower:   (252, 0,  100, 106667, 106867)
+      Boulderback: (252, 14, 100, 193333, 193533)
+    Interpretation: a 200 ms sequence used as the model's rest/static pose
+    (e.g. for portraits/preview). unk_id = 252 in both models (a standard
+    sequence id?); unk_0 varies per model.
+    """
     SIZE = 48
     def __init__(self):
-        self.unk_id = 0
-        self.unk_0 = 0 # maybe combined with unk_id in an integer32
-        self.unk_1 = 0 # seem to be animation sequence ids
-        self.unk_2 = 0 # seem to be animation sequence ids
-        self.start_frame = 0
-        self.end_frame = 0
+        self.unk_id = 0   # sequence/db id? (252 / 917756 observed)
+        self.unk_0 = 0    # maybe combined with unk_id in an integer32
+        self.unk_1 = 0    # together with unk_2 forms uint32 = 100 in both models
+        self.unk_2 = 0
+        self.start_frame = 0   # timestamp in ms on the global animation timeline
+        self.end_frame = 0     # = start + 200 ms in both observed models
         self.values = None
     @staticmethod
     def read_all(br, m3):
-        start_pos = m3.SIZE + m3.struct080_def["ofs"]
+        start_pos = m3.SIZE + m3.BindPose_def["ofs"]
         br.seek(start_pos)
-        unk080s = []
-        for i in range(m3.struct080_def["nr"]):
-            br.seek(start_pos + i*UNK080.SIZE)
-            a_unk080 = UNK080()
-            a_unk080.unk_id, a_unk080.unk_0, a_unk080.unk_1, a_unk080.unk_2 = struct.unpack("<4h", br.read(8))
-            a_unk080.start_frame, a_unk080.end_frame = struct.unpack("<2I", br.read(8))
-            a_unk080.values = struct.unpack("<16h", br.read(32))
-            # a_unk080.print()
-            unk080s.append(a_unk080)
-        return unk080s
+        bindPoses = []
+        for i in range(m3.BindPose_def["nr"]):
+            br.seek(start_pos + i*BindPose.SIZE)
+            a_bindPose = BindPose()
+            a_bindPose.unk_id, a_bindPose.unk_0, a_bindPose.unk_1, a_bindPose.unk_2 = struct.unpack("<4h", br.read(8))
+            a_bindPose.start_frame, a_bindPose.end_frame = struct.unpack("<2I", br.read(8))
+            a_bindPose.values = struct.unpack("<16h", br.read(32))
+            # a_bindPose.print()
+            bindPoses.append(a_bindPose)
+        return bindPoses
     def print(self):
         print(f"{self.unk_id},{self.unk_0},{self.unk_1},{self.unk_2},{self.start_frame},{self.end_frame},{self.values}")
 
@@ -1341,283 +1351,365 @@ class LIGHT:
         print(self.values2)
         print(self.values3)
 
-class Unk2F8:
+class ParticleEmitter:
+    """0x2F8 header block  --  PARTICLE EMITTER  (was: Unk2F8)
+
+    Validated on two models:
+      - Party_Rowsdower.m3: 6 emitters on the firework prop bones
+        (29,30,31 / 34,35,36 - two mirrored chains), firework colors,
+        sparks/streamer/flash parameter sets.
+      - Boulderback.m3:     15 emitters on spine/leg/feet bones
+        (1,2,4,5,7,8,10,11,13,14,18), smoke/dust textures, with spawn-count
+        tracks animated so dust only fires during step/impact moments.
+
+    Memory layout of one entry's data region (offsets relative to
+    track_start_pos = end of the entry array). The per-entry stride VARIES
+    (9.5-22 KB observed in Boulderback) because the keyframe area grows with
+    animation; it is recovered here from consecutive entries' params_ofs:
+
+        +0x0000    64 B                  keyframe data for the entry's own
+                                         td1/td2 (track_base-relative offsets)
+        +0x0040    PARAMS_SIZE (3792) B  ParticleEmitterParams struct
+        +0x0F10    rest of stride        keyframe data for the params tracks.
+                                         THE PARAMS STRUCT'S TRACK OFFSETS ARE
+                                         RELATIVE TO THIS POINT (end of the
+                                         3792-byte struct).
+    """
     SIZE = 160
+
     def __init__(self):
-        self.unkid = 0
-        self.unk01 = 0
+        self.bone_id = 0        # attachment bone the emitter follows (confirmed on both models)
+        self.unk01 = 0          # int16 reference id: 0 in Rowsdower, -1 in Boulderback
         self.unk02 = 0
         self.unk03 = 0
-        self.unk04 = 0
+        self.unk04 = 0          # 2 for most emitters, 0 for a few - emitter subtype?
         self.unk05 = 0
-        self.unk06 = 0
-        self.unk07 = 0
-        self.unk08 = 0
-        self.unk09 = 0
-        self.unk10 = 0
-        self.unk11 = 0
-        self.unk12 = 0
-        self.unk13 = 0
-        self.unk14 = 0
-        self.unk15 = 0
-        self.unk16 = 0
-        self.unk17 = 0
-        self.unk18 = 0
-        self.unk19 = 0
+        self.unk06_10 = []      # 5 x uint32; (0,3,1,*,*) observed - type/blend enums
+        self.unk11_18 = []      # 8 x int16; flags - [4] and [6] vary per emitter
+        self.unk19 = 0          # float, 0.0 in both models
         self.unk20 = 0
         self.unk21 = 0
-        self.trackdef_1  = []  # nr, posA, posB
-        self.trackdef_2  = []  # nr, posA, posB
+        self.trackdef_1 = []    # nr, posA, posB   (track_base-relative)
+        self.trackdef_2 = []    # nr, posA, posB   (track_base-relative)
         self.values1 = 0
-        self.unk_ofs = 0
-        self.values2 = 0
+        self.params_ofs = 0     # offset of ParticleEmitterParams, track_base-relative
+        self.values2 = 0        # 4 x uint16, 0xFFFF = unset references
 
         self.track1 = None
         self.track2 = None
-
-        self.subclass = None
+        self.params = None      # ParticleEmitterParams
 
     @staticmethod
     def read_all(br, m3):
-        start_pos = m3.SIZE + m3.struct2F8_def["ofs"]
-        unk2f8s = []
-        track_start_pos = start_pos + m3.struct2F8_def["nr"]*Unk2F8.SIZE
-        for i in range(m3.struct2F8_def["nr"]):
-            br.seek(start_pos + i*Unk2F8.SIZE)
-            a_unk2f8 = Unk2F8()
-            a_unk2f8.unkid, a_unk2f8.unk01, a_unk2f8.unk02, a_unk2f8.unk03, a_unk2f8.unk04, a_unk2f8.unk05 = struct.unpack("<HhHHHH", br.read(12))
-            a_unk2f8.unk06, a_unk2f8.unk07, a_unk2f8.unk08, a_unk2f8.unk09, a_unk2f8.unk10  = struct.unpack("<IIIII", br.read(20))
-            a_unk2f8.unk11, a_unk2f8.unk12, a_unk2f8.unk13, a_unk2f8.unk14, a_unk2f8.unk15, a_unk2f8.unk16, a_unk2f8.unk17, a_unk2f8.unk18 = struct.unpack("<hhhhhhhh", br.read(16))
-            a_unk2f8.unk19, a_unk2f8.unk20, a_unk2f8.unk21 = struct.unpack("<fhh",  br.read(8))
-            a_unk2f8.trackdef_1 = struct.unpack("<QQQ",  br.read(24))
-            a_unk2f8.trackdef_2 = struct.unpack("<QQQ",  br.read(24))
-            a_unk2f8.values1 = struct.unpack("<40B", br.read(40))
-            a_unk2f8.unk_ofs,= struct.unpack("<Q", br.read(8))
-            a_unk2f8.values2 = struct.unpack("<4H", br.read(8))
-            
-            a_unk2f8.track1 = Track.read_track(br, track_start_pos, *a_unk2f8.trackdef_1, "2?")
-            a_unk2f8.track2 = Track.read_track(br, track_start_pos, *a_unk2f8.trackdef_2, "2?")
-            # a_unk2f8.print()
-            # a_unk2f8.subclass = Unk2F8_SUBCLASS.read_all(br, a_unk2f8, track_start_pos + a_unk2f8.unk_ofs)
-            unk2f8s.append(a_unk2f8)
-        return unk2f8s
+        start_pos = m3.SIZE + m3.ParticleEmitter_def["ofs"]
+        emitters = []
+        nr = m3.ParticleEmitter_def["nr"]
+        track_start_pos = start_pos + nr * ParticleEmitter.SIZE
+        # upper bound for keyframe timestamps = end of the global animation
+        # timeline (used to reject false-positive trackdefs while scanning)
+        anims = getattr(m3, "model_animations", None) or []
+        time_bound = max((a.timestamp_end for a in anims), default=10_000_000) + 1
+        raw_entries = []
+        for i in range(nr):
+            br.seek(start_pos + i * ParticleEmitter.SIZE)
+            e = ParticleEmitter()
+            e.bone_id, e.unk01, e.unk02, e.unk03, e.unk04, e.unk05 = struct.unpack("<HhHHHH", br.read(12))
+            e.unk06_10 = struct.unpack("<5I", br.read(20))
+            e.unk11_18 = struct.unpack("<8h", br.read(16))
+            e.unk19, e.unk20, e.unk21 = struct.unpack("<fhh", br.read(8))
+            e.trackdef_1 = struct.unpack("<QQQ", br.read(24))
+            e.trackdef_2 = struct.unpack("<QQQ", br.read(24))
+            e.values1 = struct.unpack("<40B", br.read(40))
+            e.params_ofs, = struct.unpack("<Q", br.read(8))
+            e.values2 = struct.unpack("<4H", br.read(8))
+            raw_entries.append(e)
+        for i, e in enumerate(raw_entries):
+            e.track1 = Track.read_track(br, track_start_pos, *e.trackdef_1, "2?")
+            e.track2 = Track.read_track(br, track_start_pos, *e.trackdef_2, "2?")
+            if i + 1 < nr:
+                region_size = raw_entries[i + 1].params_ofs - e.params_ofs + 64
+            else:
+                region_size = None  # derived inside the params reader
+            e.params = ParticleEmitterParams.read(
+                br, track_start_pos + e.params_ofs, region_size, time_bound)
+            emitters.append(e)
+        return emitters
 
     def print(self):
-        print(f"UNK2F8: {self.unkid},{self.unk01},{self.unk02},{self.unk03},{self.unk04},{self.unk05},{self.unk06},{self.unk07},{self.unk08},{self.unk09},{self.unk10},{self.unk11},{self.unk12},{self.unk13},{self.unk14},{self.unk15},{self.unk16},{self.unk17},{self.unk18},{self.unk19},{self.unk20},{self.unk21}")
-        print(f"track_def_1:{self.trackdef_1},track_def_2:{self.trackdef_2},start:{self.unk_ofs}")
+        print(f"PARTICLE EMITTER: bone={self.bone_id} subtype?={self.unk04} "
+              f"params_ofs={self.params_ofs} tracks={len(self.params.tracks) if self.params else 0}")
+        if self.params:
+            self.params.print()
 
-class Unk2F8_SUBCLASS:          # deactivated. still incorrect reading. check Boulderback.m3
-    SIZE = 3792
+
+class ParticleEmitterParams:
+    """The 3792-byte parameter struct of a ParticleEmitter (was Unk2F8_SUBCLASS).
+
+    Layout: a short fixed header (counts at +0x08, int64 reference ids -
+    mostly -1 - up to +0x68), then a dense table of 24-byte track definitions
+    (int64 nr, int64 time_ofs, int64 value_ofs) in groups, with small scalar
+    parameter runs between groups (~139 trackdefs total; exact group sizes
+    vary slightly per model, so this reader scans rather than assuming a
+    fixed table).
+
+    TRACK ENCODING (validated on Rowsdower + Boulderback, 2000+ tracks):
+      - offsets are relative to the END of this struct (struct_pos + 3792)
+      - timestamps: nr x uint32 (milliseconds, global animation timeline),
+        packed at time_ofs
+      - the unified rule  value_ofs == align16(time_ofs + 4*nr)  holds for
+        every track; nr == 1 degenerates to the old value_ofs == time_ofs+16
+      - values follow at value_ofs; element size varies per parameter
+        (2 B float16 scalar / 4 B / 6 B float16 vec3 / 16 B for single-key
+        slots) and is inferred from the gap to the next track's data.
+
+    Use `describe()` for a decoded {name: value} view of the tracks listed
+    in PARAM_TRACK_HINTS.
+    """
+    SIZE = 3792           # confirmed on both models
+    TRACKS_START = 0x68
+
+    # struct_ofs -> (name, value_view, description)
+    # confidence: [C] = consistent across both validated models,
+    #             [H] = hypothesis from one model / indirect evidence
+    PARAM_TRACK_HINTS = {
+        0x068: ("spawn_count_min", "u16", "[C] particles per emission, lower bound; animated per-step in Boulderback"),
+        0x080: ("spawn_count_max", "u16", "[C] particles per emission, upper bound"),
+        0x098: ("burst_count_min", "u16", "[H] secondary emission count, lower bound (25-200 observed)"),
+        0x0B0: ("burst_count_max", "u16", "[H] secondary emission count, upper bound"),
+        0x0E0: ("multiplier_0E0", "f16", "[C] scalar multiplier, 1.0 in all observed emitters"),
+        0x0F8: ("lifetime_ms_min", "u16", "[C] particle lifetime in ms, lower bound (533/833/1333 observed)"),
+        0x110: ("lifetime_ms_max", "u16", "[C] particle lifetime in ms, upper bound (800/1166/1666 observed)"),
+        0x128: ("emission_vector", "f16v3", "[C] float16 vec3, 6 B/key; emission direction/velocity, e.g. (0,1,-4); 30 fps-sampled when animated"),
+        0x158: ("speed_min", "f16", "[C] particle speed, lower bound (0.18-1.0 observed)"),
+        0x170: ("speed_max", "f16", "[C] particle speed, upper bound (0.5-1.72 observed)"),
+        0x188: ("acceleration", "f16v3", "[H] float16 vec3; (0,+-1,0) Rowsdower, (0,+-4..15,0) Boulderback - gravity/accel or aim vector"),
+        0x1D0: ("scale_ramp_0", "f16", "[H] scalar f16; animated 0.5->0.85 ramp observed in Boulderback"),
+        0x218: ("param_218", "f16", "[H] scalar f16 (0.1-1.0 observed)"),
+        0x230: ("param_230", "f16", "[H] scalar f16 (0.025-1.0 observed)"),
+        0x248: ("param_248", "f16", "[H] scalar f16 (0.2-2.0 observed)"),
+        0x260: ("delay_ms", "u16", "[H] uint16; 60/100/300 observed - emission delay or period in ms"),
+        0x298: ("color_a_key0", "rgb", "[C] RGB byte triple - color ramp A over particle life"),
+        0x2B0: ("color_a_key1", "rgb", "[C] RGB byte triple"),
+        0x2C8: ("color_a_key2", "rgb", "[C] RGB byte triple"),
+        0x2E0: ("color_a_key3", "rgb", "[C] RGB byte triple"),
+        0x2F8: ("color_a_key4", "rgb", "[C] RGB byte triple"),
+        0x310: ("color_b_key0", "rgb", "[C] RGB byte triple - color ramp B (second layer/end state)"),
+        0x328: ("color_b_key1", "rgb", "[C] RGB byte triple"),
+        0x340: ("color_b_key2", "rgb", "[C] RGB byte triple"),
+        0x358: ("color_b_key3", "rgb", "[C] RGB byte triple"),
+        0x370: ("color_b_key4", "rgb", "[C] RGB byte triple"),
+        0x3A0: ("alpha_a_key0", "u8", "[H] opacity ramp keys, 0-255"),
+        0x3B8: ("alpha_a_key1", "u8", "[H]"),
+        0x3D0: ("alpha_a_key2", "u8", "[H]"),
+        0x3E8: ("alpha_a_key3", "u8", "[H]"),
+        0x500: ("size_key0", "f16", "[H] particle size keys over life (0.25-2.25 observed)"),
+        0x518: ("size_key1", "f16", "[H]"),
+        0x530: ("size_key2", "f16", "[H]"),
+        0x548: ("size_key3", "f16", "[H]"),
+        0x560: ("size_key4", "f16", "[H]"),
+    }
+
+    _ELEM_SIZES = (16, 12, 8, 6, 4, 2, 1)
+
     def __init__(self):
-        self.values1 = 0
-        self.trackdef_0_23 = []
-        self.values2 = 0
-        self.trackdef_24_37 = []
-        self.unk01 = 0
-        self.trackdef_38_47 = []
-        self.unk02 = 0
-        self.trackdef_48_57 = []
-        self.unk03 = 0
-        self.trackdef_58_67 = []
-        self.unk03 = 0
-        self.trackdef_68_77 = []
-        self.values3 = []
-        self.trackdef_78_88 = []
-        self.values4 = []
-        self.trackdef_89_98 = []
-        self.unk04 = 0
-        self.trackdef_99_108 = []
-        self.unk05 = 0
-        self.trackdef_109_118 = []
-        self.unk06 = 0
-        self.trackdef_119_128 = []
-        self.unk07 = 0
-        self.trackdef_129_138 = []
-        self.values5 = []
-        # end of header
-        # inside the data structure
-        self.trackdef_139_145 = []
-        # end of data
-        self.track_139_145 = []
-        self.track_0_23 = []
-        self.track_24_37 = []
-        self.track_38_47 = []
-        self.track_48_57 = []
-        self.track_58_67 = []
-        self.track_68_77 = []
-        self.track_78_88 = []
-        self.track_89_98 = []
-        self.track_99_108 = []
-        self.track_109_118 = []
-        self.track_119_128 = []
-        self.track_129_138 = []
+        self.header_counts = ()   # 3 x uint16 at +0x08
+        self.ref_ids = ()         # int64 ids at +0x20..+0x68, -1 = unset
+        self.tracks = []          # list of dicts, in struct order (see read())
+        self.scalars = []         # (struct_offset, raw bytes) runs between track groups
+        self.data_size = 0
+
     @staticmethod
-    def read_all(br, unk2f8, start_pos):
-        br.seek(start_pos)
-        temp = Unk2F8_SUBCLASS()
-        temp.values1 = struct.unpack("<52H", br.read(104))
-        for i in range(23): # 23 tracks!!!
-            temp.trackdef_0_23.append(struct.unpack("<3Q", br.read(24)))
-        temp.values2 = struct.unpack("<4H", br.read(8))
-        for i in range(15):
-            temp.trackdef_24_37.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk01, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_38_47.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk02, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_48_57.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk03, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_58_67.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk03 = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_68_77.append(struct.unpack("<3Q", br.read(24)))
-        temp.values3 = struct.unpack("<72H", br.read(144))
-        for i in range(11):
-            temp.trackdef_78_88.append(struct.unpack("<3Q", br.read(24)))
-        temp.values4 = struct.unpack("<20H", br.read(40))
-        for i in range(10):
-            temp.trackdef_89_98.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk04, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_99_108.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk05, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_109_118.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk06, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_119_128.append(struct.unpack("<3Q", br.read(24)))
-        temp.unk07, = struct.unpack("<Q", br.read(8))
-        for i in range(10):
-            temp.trackdef_129_138.append(struct.unpack("<3Q", br.read(24)))
-        temp.values5 = struct.unpack("<48H", br.read(96))
+    def _align16(x):
+        return (x + 15) & ~15
 
-        # data location
-        start_pos2 = start_pos + Unk2F8_SUBCLASS.SIZE
-        br.seek(start_pos2)
-        for i in range(6):
-            temp.trackdef_139_145.append(struct.unpack("<3Q", br.read(24)))
+    @staticmethod
+    def read(br, struct_pos, region_size=None, time_bound=10_000_000):
+        p = ParticleEmitterParams()
+        br.seek(struct_pos)
+        raw = br.read(ParticleEmitterParams.SIZE)
+        if len(raw) < ParticleEmitterParams.SIZE:
+            return p
+        p.header_counts = struct.unpack_from("<3H", raw, 0x08)
+        p.ref_ids = struct.unpack_from("<9q", raw, 0x20)
+        data_pos = struct_pos + ParticleEmitterParams.SIZE
+        if region_size is not None:
+            p.data_size = region_size - 64 - ParticleEmitterParams.SIZE
+        else:
+            p.data_size = 1 << 20   # provisional upper bound
 
-        HEADER_SIZE2 = 144  # guess, but seems to be accurate and work out nicely
-        start_pos3 = start_pos2 + HEADER_SIZE2
-        # these tracks are read from start_pos3
-        for a_tracdef in temp.trackdef_139_145:
-            print(a_tracdef)
-            temp.track_139_145.append(Track.read_track(br, start_pos3, *a_tracdef, "2?"))
-        # these tracks are read from start_pos2
-        for a_tracdef in temp.trackdef_0_23:
-            temp.track_0_23.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_24_37:
-            temp.track_24_37.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_38_47:
-            temp.track_38_47.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_48_57:
-            temp.track_48_57.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_58_67:
-            temp.track_58_67.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_68_77:
-            temp.track_68_77.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_78_88:
-            temp.track_78_88.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_89_98:
-            temp.track_89_98.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_99_108:
-            temp.track_99_108.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_109_118:
-            temp.track_109_118.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_119_128:
-            temp.track_119_128.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        for a_tracdef in temp.trackdef_129_138:
-            temp.track_129_138.append(Track.read_track(br, start_pos2, *a_tracdef, "2?"))
-        # temp.print()
+        # --- scan for trackdefs (unified rule, timestamp-validated) ---
+        defs = []
+        scalars = []
+        o = ParticleEmitterParams.TRACKS_START
+        gap_start = None
+        a16 = ParticleEmitterParams._align16
+        while o + 24 <= ParticleEmitterParams.SIZE:
+            ok = False
+            nr, a, b = struct.unpack_from("<3q", raw, o)
+            if 0 < nr < 0x10000 and 0 <= a < p.data_size and b == a16(a + 4 * nr) and b <= p.data_size:
+                br.seek(data_pos + a)
+                ts = struct.unpack(f"<{nr}I", br.read(4 * nr))
+                if all(ts[j] <= ts[j + 1] for j in range(nr - 1)) and ts[-1] < time_bound:
+                    ok = True
+            if ok:
+                if gap_start is not None:
+                    scalars.append((gap_start, raw[gap_start:o]))
+                    gap_start = None
+                defs.append((o, nr, a, b, ts))
+                o += 24
+            else:
+                if gap_start is None:
+                    gap_start = o
+                o += 4
+        if gap_start is not None:
+            scalars.append((gap_start, raw[gap_start:ParticleEmitterParams.SIZE]))
+        p.scalars = scalars
+        if region_size is None and defs:
+            p.data_size = max(d[3] for d in defs) + 32
+
+        # --- read values; infer per-track element size from slot extents ---
+        starts = sorted(d[2] for d in defs)
+        for (o, nr, a, b, ts) in defs:
+            import bisect
+            j = bisect.bisect_right(starts, a)
+            region_end = starts[j] if j < len(starts) else p.data_size
+            vsize = max(0, region_end - b)
+            elem = next((s for s in ParticleEmitterParams._ELEM_SIZES if s * nr <= vsize), 0)
+            br.seek(data_pos + b)
+            vraw = br.read(min(vsize, max(elem * nr, 16)))
+            t = {"struct_ofs": o, "nr": nr, "time_ofs": a, "value_ofs": b,
+                 "timestamps": ts, "elem_size": elem, "values_raw": vraw,
+                 # first-key views (back-compat with earlier revisions):
+                 "raw": vraw[:16], "u8": (), "u16": (), "f16": (), "f32": ()}
+            head = vraw[:16].ljust(16, b"\x00")
+            t["u8"] = struct.unpack("<16B", head)
+            t["u16"] = struct.unpack("<8H", head)
+            t["f16"] = tuple(float(x) for x in struct.unpack("<8e", head))
+            t["f32"] = struct.unpack("<4f", head)
+            # per-key decoded values (float16 lanes; use values_raw for other views)
+            t["values"] = []
+            if elem:
+                for k in range(nr):
+                    kraw = vraw[k * elem:(k + 1) * elem]
+                    if len(kraw) < elem:
+                        break
+                    if elem % 2 == 0:
+                        t["values"].append(tuple(float(x) for x in struct.unpack(f"<{elem // 2}e", kraw)))
+                    else:
+                        t["values"].append(tuple(kraw))
+            p.tracks.append(t)
+        return p
+
+    # ------------------------------------------------------------------
+    def nonzero_tracks(self):
+        return [t for t in self.tracks if any(t["timestamps"]) or any(t["values_raw"])]
+
+    def describe(self):
+        """Decoded {name: value} for the tracks in PARAM_TRACK_HINTS.
+        Single-key tracks give the value; animated tracks give
+        [(t_ms, value), ...]."""
+        by_ofs = {t["struct_ofs"]: t for t in self.tracks}
+        out = {}
+        for ofs, (name, view, _desc) in ParticleEmitterParams.PARAM_TRACK_HINTS.items():
+            t = by_ofs.get(ofs)
+            if t is None:
+                continue
+            def one(raw16, f16):
+                if view == "u16":
+                    return struct.unpack_from("<H", raw16)[0] if raw16 else None
+                if view == "f16":
+                    return round(f16[0], 4) if f16 else None
+                if view == "f16v3":
+                    return [round(x, 4) for x in f16[:3]]
+                if view == "rgb":
+                    return list(raw16[:3])
+                if view == "u8":
+                    return raw16[0] if raw16 else None
+            if t["nr"] <= 1:
+                out[name] = one(t["raw"], t["f16"])
+            else:
+                elem = t["elem_size"] or 2
+                keys = []
+                for k, ts in enumerate(t["timestamps"]):
+                    kraw = t["values_raw"][k * elem:(k + 1) * elem]
+                    kf16 = tuple(float(x) for x in struct.unpack(f"<{len(kraw) // 2}e", kraw)) if len(kraw) >= 2 else ()
+                    keys.append((ts, one(kraw, kf16)))
+                out[name] = keys
+        return out
+
     def print(self):
-        line = "Trackdef 0-23: "
-        for a_track in self.trackdef_0_23:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 24-37: "
-        for a_track in self.trackdef_24_37:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 38-47: "
-        for a_track in self.trackdef_38_47:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 48-57: "
-        for a_track in self.trackdef_48_57:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 58-67: "
-        for a_track in self.trackdef_58_67:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 68-77: "
-        for a_track in self.trackdef_68_77:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 78-88: "
-        for a_track in self.trackdef_78_88:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 89-98: "
-        for a_track in self.trackdef_89_98:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 99-108: "
-        for a_track in self.trackdef_99_108:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 109-118: "
-        for a_track in self.trackdef_109_118:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 119-128: "
-        for a_track in self.trackdef_119_128:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 129-138: "
-        for a_track in self.trackdef_129_138:
-            line += str(a_track) + ","
-        print(line)
-        line = "Trackdef 139-145: "
-        for a_track in self.trackdef_139_145:
-            line += str(a_track) + ","
-        print(line)
+        print(f"  params: header_counts={self.header_counts} tracks={len(self.tracks)} "
+              f"({len(self.nonzero_tracks())} non-zero) data_size={self.data_size}")
+        d = self.describe()
+        for k in ("spawn_count_min", "spawn_count_max", "lifetime_ms_min", "lifetime_ms_max",
+                  "speed_min", "speed_max", "emission_vector", "acceleration"):
+            if k in d:
+                v = d[k]
+                if isinstance(v, list) and v and isinstance(v[0], tuple):
+                    v = f"<animated, {len(v)} keys, first={v[0]} last={v[-1]}>"
+                print(f"    {k} = {v}")
+        cols = [d[k] for k in d if k.startswith("color_") and d[k] and not isinstance(d[k][0], tuple)]
+        if cols:
+            print(f"    color ramp: {cols}")
 
-class UNK328:
+
+class SpriteAttachment:
+    """0x328 header block  --  BONE-ANCHORED SPRITE/GLOW  (was: UNK328)
+
+    In Party_Rowsdower.m3 there are exactly four entries matching the four FX
+    sprite textures in the model (Glow_Circ_01, Smoke_Puff_01, Glow_Cross_01,
+    Light_01). Each entry anchors to a bone (spine/head chain: 1, 2, 4, 5) and
+    carries one animated float16 scalar (sizes/intensities 0.349/0.582 in two
+    symmetric pairs) plus constants that look like attenuation/range
+    parameters (0.1, 0.01, 3276.8).
+
+    Boulderback.m3 confirms the pattern: 2 entries on bones 1 and 2 (root/
+    spine) with the SAME constants (multiplier 1.3333, value 0.5815,
+    attenuation (0.1, 0.01, 3276.8)) and `unk_id_b` = 76/77 - again high
+    indices near the end of the skeleton (86 bones). So `unk_id_b` references
+    a utility/attachment bone appended at the end of the bone list, and these
+    entries look like a standard rig glow/billboard anchor present on
+    creatures generally (not party-specific).
+    """
     SIZE = 56
+
     def __init__(self):
-        self.unkid_1 = 0
-        self.unkid_2 = 0
+        self.bone_id = 0        # (was unkid_1) anchor bone
+        self.unk_id_b = 0       # (was unkid_2) 67,68,69,74 in reference file; also in bone-id range
         self.unk0 = 0
         self.unk1 = 0
-        self.unk2 = 0
-        self.unk3 = 0
-        self.unk4 = 0
-        self.unk5 = 0 
+        self.multiplier = 0.0   # f32; 1.0 or 1.333 in reference file
+        self.unk_flag = 0       # uint64-ish; 1 in reference file
         self.trackdef_0 = []
-        self.unkVec3 = []
-        self.unk6 = 0 
+        self.attenuation = []   # 3 x f32: (0.1, 0.01, 3276.8) in reference file
+        self.unk6 = 0
+
+        self.track_0 = None     # single animated float16 (sprite size/intensity)
+
     @staticmethod
     def read_all(br, m3):
-        start_pos = m3.SIZE + m3.struct328_def["ofs"]
+        start_pos = m3.SIZE + m3.SpriteAttachment_def["ofs"]
         temps = []
-        track_start_pos = start_pos + m3.struct328_def["nr"]*UNK328.SIZE
-        for i in range(m3.struct328_def["nr"]):
-            br.seek(start_pos + i*UNK328.SIZE)
-            a_temp = UNK328()
-            a_temp.unkid_1, a_temp.unkid_2, a_temp.unk0, a_temp.unk1, a_temp.unk2, a_temp.unk3, a_temp.unk4, a_temp.unk5 = struct.unpack("<8H", br.read(16))
-            a_temp.trackdef_0 = struct.unpack("<QQQ",  br.read(24))
-            a_temp.unkVec3 = struct.unpack("<3f", br.read(12))
+        track_start_pos = start_pos + m3.SpriteAttachment_def["nr"] * SpriteAttachment.SIZE
+        for i in range(m3.SpriteAttachment_def["nr"]):
+            br.seek(start_pos + i * SpriteAttachment.SIZE)
+            a_temp = SpriteAttachment()
+            a_temp.bone_id, a_temp.unk_id_b = struct.unpack("<HH", br.read(4))
+            a_temp.unk0, = struct.unpack("<I", br.read(4))
+            a_temp.multiplier, = struct.unpack("<f", br.read(4))
+            a_temp.unk1, = struct.unpack("<I", br.read(4))
+            a_temp.trackdef_0 = struct.unpack("<QQQ", br.read(24))
+            a_temp.attenuation = struct.unpack("<3f", br.read(12))
             a_temp.unk6 = struct.unpack("<I", br.read(4))
 
-            a_temp.track_0 = Track.read_track(br, track_start_pos, *a_temp.trackdef_0, "2f") # confirmed to be float16
-            # a_temp.print()
+            a_temp.track_0 = Track.read_track(br, track_start_pos, *a_temp.trackdef_0, "2f")  # confirmed float16
             temps.append(a_temp)
         return temps
+
     def print(self):
-        print(f"UNK328: {self.unkid_1},{self.unkid_2},{self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.unk4},{self.unk5},{self.trackdef_0},{self.unkVec3},{self.unk6}")
+        print(f"SPRITE ATTACHMENT: bone={self.bone_id} id_b={self.unk_id_b} mult={self.multiplier} "
+              f"atten={self.attenuation} track={list(zip(self.track_0.keyframes, self.track_0.values))}")
+
 
 class UNK490:
     SIZE = 64
@@ -1666,7 +1758,7 @@ class UNK490:
             temps.append(a_temp)
         return temps
     def print(self):
-        print(f"UNK328: {self.nrUnk1},{self.ofsUnk1},{self.nrVertices},{self.ofsVertices},{self.nrIndices},{self.ofsIndices},{self.nrUnkStruct},{self.ofsUnkStruct},")
+        print(f"UNK490: {self.nrUnk1},{self.ofsUnk1},{self.nrVertices},{self.ofsVertices},{self.nrIndices},{self.ofsIndices},{self.nrUnkStruct},{self.ofsUnkStruct},")
 
 class UNK540:
     SIZE = 112      # TODO: not enough data to be sure about this
@@ -1696,12 +1788,33 @@ class UNK540:
             temps.append(a_temp)
         return temps
     def print(self):
-        print(f"UNK328: {self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},{self.values},")
+        print(f"UNK540: {self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},{self.values},")
 
-class UNK560:
+class EffectTimeline: # (maybe emotes)
+    """0x560 header block  --  FX ENABLE / VISIBILITY ENVELOPE  (was: UNK560)
+
+    In Party_Rowsdower.m3 the single entry references utility bone 75 and
+    track_0 holds a 4-key float16 envelope:
+
+        timestamps: (0, 83333, 93300, 113400) ms
+        values:     (0.0, 0.0, 1.0, 1.0)
+
+    83333-93333 ms is exactly the model's 10-second celebration animation
+    (seq_db_id 7504) - this block gates an effect (the fireworks/party FX) to
+    that sequence on the global animation timeline.
+
+    The byte layout matches the old UNK560 reading; the field names and the
+    semantic interpretation are new. track_1 carried a single integer 1 at
+    t=0 in the reference file (likely an enable flag).
+
+    Boulderback.m3 has 0 entries - the block only appears when an effect is
+    gated to a specific window of the animation timeline.
+    """
     SIZE = 160
+
     def __init__(self):
-        self.values1 = []
+        self.bone_id = 0        # (was values1[0]) bone the effect is anchored to / driven by
+        self.unk_a = 0          # (was values1[1])
         self.unk0 = 0
         self.unk1 = 0
         self.unk2 = 0
@@ -1716,31 +1829,36 @@ class UNK560:
         self.trackdef_0 = []
         self.trackdef_1 = []
         self.values3 = []
+
+        self.track_0 = None     # float16 weight envelope over the global animation timeline
+        self.track_1 = None     # integer flag track
+
     @staticmethod
     def read_all(br, m3):
-        start_pos = m3.SIZE + m3.struct560_def["ofs"]
+        start_pos = m3.SIZE + m3.EffectTimeline_def["ofs"]
         temps = []
-        data_start_pos = start_pos + m3.struct560_def["nr"] * UNK560.SIZE
-        for i in range(m3.struct560_def["nr"]):
-            br.seek(start_pos + i*UNK560.SIZE)
-            a_temp = UNK560()
-            a_temp.values1 = struct.unpack(f"<2H", br.read(4))
-            a_temp.unk0,a_temp.unk1,a_temp.unk2,a_temp.unk3,a_temp.unk4,a_temp.unk5,a_temp.unk6,a_temp.unk7,a_temp.unk8,a_temp.unk9 = struct.unpack(f"<10H", br.read(20))
-            a_temp.values2 = struct.unpack(f"<8H", br.read(16))
-            a_temp.trackdef_0 = struct.unpack("<QQQ",  br.read(24))
-            a_temp.trackdef_1 = struct.unpack("<QQQ",  br.read(24))
-            a_temp.values3 = struct.unpack(f"<36H", br.read(72))
-            
-            a_temp.track_0 = Track.read_track(br, data_start_pos, *a_temp.trackdef_0, "2f") # confirmed that this data is float16
-            a_temp.track_1 = Track.read_track(br, data_start_pos, *a_temp.trackdef_1, "2?") # TODO: confirm the type of data that is in here.
-            # a_temp.print()
+        data_start_pos = start_pos + m3.EffectTimeline_def["nr"] * EffectTimeline.SIZE
+        for i in range(m3.EffectTimeline_def["nr"]):
+            br.seek(start_pos + i * EffectTimeline.SIZE)
+            a_temp = EffectTimeline()
+            a_temp.bone_id, a_temp.unk_a = struct.unpack("<2H", br.read(4))
+            (a_temp.unk0, a_temp.unk1, a_temp.unk2, a_temp.unk3, a_temp.unk4,
+             a_temp.unk5, a_temp.unk6, a_temp.unk7, a_temp.unk8, a_temp.unk9) = struct.unpack("<10H", br.read(20))
+            a_temp.values2 = struct.unpack("<8H", br.read(16))
+            a_temp.trackdef_0 = struct.unpack("<QQQ", br.read(24))
+            a_temp.trackdef_1 = struct.unpack("<QQQ", br.read(24))
+            a_temp.values3 = struct.unpack("<36H", br.read(72))
+
+            a_temp.track_0 = Track.read_track(br, data_start_pos, *a_temp.trackdef_0, "2f")  # confirmed float16
+            a_temp.track_1 = Track.read_track(br, data_start_pos, *a_temp.trackdef_1, "2?")
             temps.append(a_temp)
         return temps
+
     def print(self):
-        print(f"UNK328: {self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.unk4},{self.unk5},{self.unk6},{self.unk7},{self.unk8},{self.trackdef_0},{self.trackdef_1}")
-        print(self.values1)
-        print(self.values2)
-        print(self.values3)
+        print(f"EFFECT TIMELINE: bone={self.bone_id} "
+              f"envelope={list(zip(self.track_0.keyframes, self.track_0.values))} "
+              f"flags={list(zip(self.track_1.keyframes, self.track_1.values))}")
+
 
 class UNK570:
     SIZE = 32
@@ -1765,7 +1883,7 @@ class UNK570:
             temps.append(a_temp)
         return temps
     def print(self):
-        print(f"UNK328: {self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},")
+        print(f"UNK570: {self.unk0},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},")
 
 class UNK588:
     SIZE = 32
@@ -1794,7 +1912,7 @@ class UNK588:
             temps.append(a_temp)
         return temps
     def print(self):
-        print(f"UNK328: {self.unk_id},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},")
+        print(f"UNK588: {self.unk_id},{self.unk1},{self.unk2},{self.unk3},{self.trackdef_0},")
 
 class CustomBoneMinMaxValues:
     SIZE = 76

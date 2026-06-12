@@ -1,7 +1,10 @@
 from m3reader import *
 from gltf_utils import *
 from pygltflib import GLTF2, Node, Skin, Scene, Animation, AnimationChannel, AnimationSampler, Accessor, Buffer, BufferView, FLOAT, VEC2, VEC3, VEC4, Primitive, Mesh, UNSIGNED_BYTE, MAT4, UNSIGNED_INT, UNSIGNED_SHORT, Image, Sampler, Texture, Material, PbrMetallicRoughness, NormalMaterialTexture
-import pyrender
+try:
+    import pyrender    # optional; only needed for preview rendering
+except ImportError:
+    pyrender = None
 import trimesh
 import base64
 import os
@@ -122,6 +125,148 @@ def create_accessor(binary_data, buffer_list, buffer_id, ofs, raw_data, data_typ
         accessor.min.extend(list(map(float, np.min(raw_data, axis=0))))
     buffer_list.append(buffer_view)
     return binary_data, accessor, buffer_list, ofs
+
+
+
+# ---------------------------------------------------------------------------
+#  FX EXPORT: particle emitters / sprite attachments / effect timeline
+#  (new structures decoded from the 0x2F8 / 0x328 / 0x560 header blocks)
+# ---------------------------------------------------------------------------
+
+def _emitter_summary(emitter):
+    """Decoded summary of a ParticleEmitter for gltf extras, based on the
+    reader's ParticleEmitterParams.describe() (see PARAM_TRACK_HINTS in
+    m3reader.py for the per-field evidence). Animated tracks are reduced to
+    (key_count, first, last) so the extras stay small."""
+    s = {"bone_id": emitter.bone_id,
+         "track_count": len(emitter.params.tracks) if emitter.params else 0}
+    if not emitter.params:
+        return s
+    for name, val in emitter.params.describe().items():
+        if isinstance(val, list) and val and isinstance(val[0], tuple):
+            s[name] = {"animated_keys": len(val), "first": list(val[0]), "last": list(val[-1])}
+        else:
+            s[name] = val
+    # collect the color ramp for marker coloring
+    s["color_ramp_rgb?"] = [v for k, v in s.items()
+                            if k.startswith("color_") and isinstance(v, list) and len(v) == 3]
+    return s
+
+
+def _emitter_display_color(summary):
+    """Pick the most saturated/bright color-ramp key as the marker color."""
+    best, best_score = (1.0, 1.0, 1.0), -1.0
+    for rgb in summary.get("color_ramp_rgb?") or []:
+        r, g, b = (c / 255.0 for c in rgb)
+        brightness = max(r, g, b)
+        saturation = brightness - min(r, g, b)
+        score = brightness * (0.25 + saturation)
+        if score > best_score:
+            best_score, best = score, (r, g, b)
+    return best
+
+
+def add_fx_nodes(gltf, m3, export_filters, scene_root_nodes):
+    """Adds visible marker nodes for the FX structures so they can be viewed:
+
+    - one octahedron marker per ParticleEmitter, parented to its attachment
+      bone (so it follows the skeleton) and colored with the emitter's
+      dominant particle color (emissive, unlit-looking);
+    - one smaller marker per SpriteAttachment, parented to its anchor bone;
+    - the EffectTimeline envelope is stored in scene extras (it has no spatial
+      data of its own).
+
+    Decoded parameters are attached as node `extras` so they survive into any
+    gltf viewer / DCC tool.
+
+    Must be called AFTER all other buffers/bufferViews/accessors have been
+    appended to `gltf` (it appends its own buffer at the end).
+    """
+    emitters = getattr(m3, "particle_emitters", []) or []
+    sprites = getattr(m3, "sprite_attachments", []) or []
+    timelines = getattr(m3, "effect_timelines", []) or []
+    if not emitters and not sprites and not timelines:
+        return
+
+    have_skeleton = bool(export_filters.get("skeleton"))
+
+    # --- shared octahedron marker geometry ---
+    R = 0.06
+    verts = np.array([[R, 0, 0], [-R, 0, 0], [0, R, 0], [0, -R, 0], [0, 0, R], [0, 0, -R]], dtype=np.float32)
+    faces = np.array([[0, 2, 4], [2, 1, 4], [1, 3, 4], [3, 0, 4],
+                      [2, 0, 5], [1, 2, 5], [3, 1, 5], [0, 3, 5]], dtype=np.uint32).flatten()
+    blob = bytearray()
+    idx_ofs, idx_len = 0, faces.nbytes
+    blob += faces.tobytes()
+    pos_ofs, pos_len = len(blob), verts.nbytes
+    blob += verts.tobytes()
+
+    buffer_id = len(gltf.buffers)
+    gltf.buffers.append(Buffer(
+        uri="data:application/octet-stream;base64," + base64.b64encode(bytes(blob)).decode("utf-8"),
+        byteLength=len(blob)))
+    bv_base = len(gltf.bufferViews)
+    gltf.bufferViews.append(BufferView(buffer=buffer_id, byteOffset=idx_ofs, byteLength=idx_len))
+    gltf.bufferViews.append(BufferView(buffer=buffer_id, byteOffset=pos_ofs, byteLength=pos_len))
+    acc_base = len(gltf.accessors)
+    idx_acc = Accessor(bufferView=bv_base, byteOffset=0, componentType=UNSIGNED_INT,
+                       count=len(faces), type="SCALAR")
+    idx_acc.max.extend([int(faces.max())]); idx_acc.min.extend([int(faces.min())])
+    pos_acc = Accessor(bufferView=bv_base + 1, byteOffset=0, componentType=FLOAT,
+                       count=len(verts), type=VEC3)
+    pos_acc.max.extend([float(x) for x in verts.max(axis=0)])
+    pos_acc.min.extend([float(x) for x in verts.min(axis=0)])
+    gltf.accessors.append(idx_acc)
+    gltf.accessors.append(pos_acc)
+
+    def add_marker_node(name, color, parent_bone_id, scale, extras):
+        mat_id = len(gltf.materials)
+        gltf.materials.append(Material(
+            pbrMetallicRoughness=PbrMetallicRoughness(
+                baseColorFactor=[color[0], color[1], color[2], 1.0],
+                metallicFactor=0.0, roughnessFactor=1.0),
+            emissiveFactor=[color[0], color[1], color[2]],
+        ))
+        mesh_id = len(gltf.meshes)
+        gltf.meshes.append(Mesh(
+            primitives=[Primitive(indices=acc_base, attributes={"POSITION": acc_base + 1}, material=mat_id)],
+            name=name))
+        node_id = len(gltf.nodes)
+        node = Node(mesh=mesh_id, name=name, scale=[scale, scale, scale])
+        node.extras = extras
+        bone_ok = 0 <= parent_bone_id < len(m3.bones)
+        if have_skeleton and bone_ok:
+            # bone nodes occupy indices 0..len(bones)-1 - parent the marker so
+            # it follows the (possibly animated) bone
+            gltf.nodes.append(node)
+            gltf.nodes[parent_bone_id].children.append(node_id)
+        else:
+            # no skeleton in the export: place the marker at the bone's global
+            # bind position instead
+            if bone_ok:
+                node.translation = list(m3.bones[parent_bone_id].position)
+            gltf.nodes.append(node)
+            scene_root_nodes.append(node_id)
+        return node_id
+
+    for i, e in enumerate(emitters):
+        summary = _emitter_summary(e)
+        color = _emitter_display_color(summary)
+        add_marker_node(f"ParticleEmitter_{i}_bone{e.bone_id}", color, e.bone_id, 1.0, summary)
+
+    for i, s in enumerate(sprites):
+        kfs = list(zip(s.track_0.keyframes, s.track_0.values)) if s.track_0 else []
+        extras = {"bone_id": s.bone_id, "id_b": s.unk_id_b, "multiplier": s.multiplier,
+                  "attenuation": list(s.attenuation), "size_track": [[int(t), float(v)] for t, v in kfs]}
+        add_marker_node(f"SpriteAttachment_{i}_bone{s.bone_id}", (1.0, 1.0, 0.6), s.bone_id, 0.5, extras)
+
+    if timelines:
+        gltf.extras = gltf.extras or {}
+        gltf.extras["effect_timelines"] = [
+            {"bone_id": t.bone_id,
+             "envelope": [[int(ts), float(v)] for ts, v in zip(t.track_0.keyframes, t.track_0.values)],
+             "flags": [[int(ts), int(v)] for ts, v in zip(t.track_1.keyframes, t.track_1.values)]}
+            for t in timelines]
 
 
 def create_m3_skeleton(m3, file_name, export_filters):
@@ -366,11 +511,32 @@ def create_m3_skeleton(m3, file_name, export_filters):
     if export_filters["skeleton"]:
         mesh_node.skin = 0
     gltf.nodes.append(mesh_node)
+    # FX structures (particle emitters / sprite attachments / effect timeline)
+    scene_root_nodes = [0, len(gltf.nodes)-1]
+    if export_filters.get("fx", True):
+        add_fx_nodes(gltf, m3, export_filters, scene_root_nodes)
     # Define the scene
-    scene = Scene(nodes=[0, len(gltf.nodes)-1], name="SceneName")  # Add the root joint to the scene, and the mesh??
+    scene = Scene(nodes=scene_root_nodes, name="SceneName")  # Add the root joint to the scene, and the mesh??
     gltf.scenes.append(scene)
     gltf.scene = 0  # Set the active scene
     # Save the GLTF
     gltf.save(file_name + ".gltf")
 
 
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("usage: python m3_to_gltf.py <model.m3> [output_basename]")
+        sys.exit(1)
+    in_path = sys.argv[1]
+    out_base = sys.argv[2] if len(sys.argv) > 2 else os.path.splitext(os.path.basename(in_path))[0]
+    with open(in_path, "rb") as br:
+        m3 = Header.read_header(br, name=os.path.basename(in_path))
+    filters = {"skeleton": True, "textures": False, "embed_textures": False,
+               "submeshes": [-1], "fx": True}
+    create_m3_skeleton(m3, out_base, filters)
+    print(f"wrote {out_base}.gltf with "
+          f"{len(getattr(m3, 'particle_emitters', []))} particle emitters, "
+          f"{len(getattr(m3, 'sprite_attachments', []))} sprite attachments, "
+          f"{len(getattr(m3, 'effect_timelines', []))} effect timelines")
